@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Clear Sky PDA</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+*{box-sizing:border-box;font-family:"Courier New",monospace}
+body{margin:0;background:#0c1320;color:#d9e6f2}
+#pda{display:flex;min-height:100vh}
+
+/* MENU */
+nav{width:200px;background:#16263f;border-right:2px solid #4fa3d1;padding:10px}
+nav button{
+  width:100%;background:#2a4563;color:#e6f1fb;
+  border:2px solid #4fa3d1;padding:10px;margin-bottom:8px;
+  text-transform:uppercase;letter-spacing:2px;cursor:pointer
+}
+nav button.active{background:#4fa3d1;color:#001018}
+
+/* CONTENT */
+#content{flex:1;padding:16px}
+.section{display:none}
+.section.active{display:block}
+
+/* INPUTS */
+input,select,button{
+  padding:8px;margin-bottom:6px;
+  background:#1b2f4a;color:#d9e6f2;
+  border:1px solid #4fa3d1
+}
+button{cursor:pointer}
+
+/* LISTS */
+ul{list-style:none;padding:0;font-size:12px}
+li{
+  display:flex;justify-content:space-between;align-items:center;
+  border-bottom:1px dotted #4fa3d1;padding:4px 0
+}
+
+/* SUB NAV */
+.sub-nav{display:flex;gap:8px;margin-bottom:10px}
+.sub-nav button{flex:1;background:#243f5c}
+.sub-nav button.active{background:#4fa3d1;color:#001018}
+
+/* VENDAS LINE */
+.sale-line{
+  display:grid;
+  grid-template-columns:2fr 1fr 1fr 1fr 32px;
+  gap:6px;
+  margin-bottom:6px;
+  align-items:center;
+  font-size:12px
+}
+
+/* BUTTONS */
+.remove{
+  background:#401414;color:#ff9b9b;
+  border:1px solid #803c3c;
+  width:28px;height:28px;cursor:pointer
+}
+
+/* REGISTROS */
+.reg-btn{
+  background:#16283b;color:#9bbcd6;
+  border:1px solid #2f5d7a;
+  font-size:11px;text-transform:uppercase;
+  padding:6px;margin-bottom:6px
+}
+.reg-danger{
+  background:#2a0f14;color:#ff9b9b;
+  border:1px solid #803c3c;
+  font-size:11px;text-transform:uppercase;
+  padding:6px
+}
+
+.total-box{
+  margin-top:10px;
+  padding:10px;
+  border:1px dashed #4fa3d1
+}
+</style>
+</head>
+
+<body>
+
+<div id="pda">
+
+<nav>
+  <button onclick="openTab('armazem')" class="active">Armazém</button>
+  <button onclick="openTab('membros')">Membros</button>
+  <button onclick="openTab('banco')">Banco</button>
+  <button onclick="openTab('vendas')">Vendas</button>
+  <button onclick="openTab('registros')">Registros</button>
+</nav>
+
+<div id="content">
+
+<!-- ARMAZÉM -->
+<div id="armazem" class="section active">
+
+  <div class="sub-nav">
+    <button onclick="openWarehouseTab('whCadastro')" class="active">Cadastrar Itens</button>
+    <button onclick="openWarehouseTab('whEstoque')">Estoque</button>
+  </div>
+
+  <div id="whCadastro">
+    <input id="whName" placeholder="Nome do item">
+    <input id="whQty" type="number" placeholder="Quantidade">
+    <select id="whType">
+      <option>Armamentos</option>
+      <option>Artefatos</option>
+      <option>Coletes</option>
+      <option>Outros</option>
+    </select>
+    <button onclick="addWarehouse()">Adicionar</button>
+  </div>
+
+  <div id="whEstoque" style="display:none">
+    <ul id="warehouseList"></ul>
+  </div>
+</div>
+
+<!-- MEMBROS -->
+<div id="membros" class="section">
+  <input id="memberName" placeholder="Nome do membro">
+  <select id="memberRole">
+    <option>Recruta</option>
+    <option>Cientista</option>
+  </select>
+  <button onclick="addMember()">Adicionar membro</button>
+  <ul id="memberList"></ul>
+</div>
+
+<!-- BANCO -->
+<div id="banco" class="section">
+  <div class="sub-nav">
+    <button onclick="openBankTab('bankMove')" class="active">Movimentação</button>
+    <button onclick="openBankTab('bankExtract')">Extrato</button>
+  </div>
+
+  <div id="bankMove">
+    <input id="bankValue" type="number" placeholder="Valor ₽">
+    <select id="bankType">
+      <option value="IN">Entrada</option>
+      <option value="OUT">Saída</option>
+    </select>
+    <select id="bankMember"></select>
+    <button onclick="addBank()">Registrar</button>
+    <p>Saldo atual: ₽ <span id="bankBalance">0</span></p>
+  </div>
+
+  <div id="bankExtract" style="display:none">
+    <ul id="bankExtractList"></ul>
+  </div>
+</div>
+
+<!-- VENDAS -->
+<div id="vendas" class="section">
+
+  <div class="sub-nav">
+    <button onclick="openSalesTab('salesItems')" class="active">Cadastro Itens</button>
+    <button onclick="openSalesTab('salesSell')">Vendas Stalker</button>
+  </div>
+
+  <div id="salesItems" class="salesSub">
+    <input id="saleItemName" placeholder="Nome do item">
+    <input id="saleNpcPrice" type="number" placeholder="Preço venda NPC">
+    <input id="saleStalkerPrice" type="number" placeholder="Preço compra Stalker">
+    <button onclick="addSaleItem()">Cadastrar item</button>
+    <ul id="salesItemList"></ul>
+  </div>
+
+  <div id="salesSell" class="salesSub" style="display:none">
+    <div id="saleLines"></div>
+    <button onclick="addSaleLine()">Adicionar item</button>
+    <button onclick="closeSale()">Fechar venda</button>
+    <div id="saleTotal" class="total-box" style="display:none"></div>
+  </div>
+</div>
+
+<!-- REGISTROS -->
+<div id="registros" class="section">
+  <button class="reg-btn" onclick="exportAll()">Exportar dados</button>
+  <label class="reg-btn" style="text-align:center">
+    Importar dados
+    <input type="file" hidden accept=".json" onchange="importAll(event)">
+  </label>
+  <button class="reg-danger" onclick="resetAll()">Reset geral</button>
+</div>
+
+</div>
+</div>
+
+<script>
+const RESET_PASSWORD="clearsky";
+
+/* INIT STORAGE */
+["warehouse","members","bank","salesItems"].forEach(k=>{
+  if(!localStorage[k]) localStorage[k]=JSON.stringify([])
+});
+
+/* NAV */
+function openTab(id){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+function openWarehouseTab(id){
+  whCadastro.style.display=id==="whCadastro"?"block":"none";
+  whEstoque.style.display=id==="whEstoque"?"block":"none";
+  document.querySelectorAll('#armazem .sub-nav button')
+    .forEach(b=>b.classList.remove('active'));
+  [...document.querySelectorAll('#armazem .sub-nav button')]
+    .find(b=>b.onclick.toString().includes(id))?.classList.add('active');
+}
+function openBankTab(id){
+  bankMove.style.display=id==="bankMove"?"block":"none";
+  bankExtract.style.display=id==="bankExtract"?"block":"none";
+}
+function openSalesTab(id){
+  document.querySelectorAll('.salesSub').forEach(s=>s.style.display="none");
+  document.getElementById(id).style.display="block";
+}
+
+/* ARMAZÉM */
+function addWarehouse(){
+  if(!whName.value||whQty.value<=0) return;
+  const w=JSON.parse(localStorage.warehouse);
+  const existing=w.find(i=>i.name.toLowerCase()===whName.value.toLowerCase());
+  if(existing){
+    existing.qty+=+whQty.value;
+  }else{
+    w.push({name:whName.value,qty:+whQty.value,type:whType.value});
+  }
+  localStorage.warehouse=JSON.stringify(w);
+  whName.value=whQty.value="";
+  renderWarehouse();
+}
+function renderWarehouse(){
+  warehouseList.innerHTML="";
+  JSON.parse(localStorage.warehouse).forEach((i,idx)=>{
+    warehouseList.innerHTML+=`<li>${i.name} (${i.type}) — ${i.qty}</li>`;
+  });
+}
+
+/* MEMBROS */
+function addMember(){
+  if(!memberName.value) return;
+  const m=JSON.parse(localStorage.members);
+  m.push({name:memberName.value,role:memberRole.value});
+  localStorage.members=JSON.stringify(m);
+  memberName.value="";
+  renderMembers(); updateMemberSelect();
+}
+function renderMembers(){
+  memberList.innerHTML="";
+  JSON.parse(localStorage.members).forEach((m,i)=>{
+    memberList.innerHTML+=`<li>${m.name} — ${m.role}
+    <button class="remove" onclick="removeMember(${i})">X</button></li>`;
+  });
+}
+function removeMember(i){
+  const m=JSON.parse(localStorage.members);
+  m.splice(i,1);
+  localStorage.members=JSON.stringify(m);
+  renderMembers(); updateMemberSelect();
+}
+function updateMemberSelect(){
+  bankMember.innerHTML="";
+  JSON.parse(localStorage.members).forEach(m=>{
+    bankMember.innerHTML+=`<option>${m.name}</option>`;
+  });
+}
+
+/* BANCO */
+function addBank(){
+  if(bankValue.value<=0||!bankMember.value) return;
+  const b=JSON.parse(localStorage.bank);
+  let saldo=0; b.forEach(x=>saldo+=x.type==="IN"?x.value:-x.value);
+  if(bankType.value==="OUT" && bankValue.value>saldo){alert("Saldo insuficiente.");return;}
+  b.push({
+    type:bankType.value,
+    value:+bankValue.value,
+    member:bankMember.value,
+    date:new Date().toISOString().split("T")[0]
+  });
+  localStorage.bank=JSON.stringify(b);
+  bankValue.value="";
+  renderBank();
+}
+function renderBank(){
+  let saldo=0;
+  bankExtractList.innerHTML="";
+  JSON.parse(localStorage.bank).forEach(b=>{
+    saldo+=b.type==="IN"?b.value:-b.value;
+    bankExtractList.innerHTML+=`<li>${b.type} | ${b.member} | ₽${b.value} | Saldo: ₽${saldo}</li>`;
+  });
+  bankBalance.textContent=saldo;
+}
+
+/* REGISTROS */
+function exportAll(){
+  const d={}; Object.keys(localStorage).forEach(k=>d[k]=JSON.parse(localStorage[k]));
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([JSON.stringify(d,null,2)],{type:"application/json"}));
+  a.download="clearsky_backup.json"; a.click();
+}
+function importAll(e){
+  const r=new FileReader();
+  r.onload=()=>{const d=JSON.parse(r.result);Object.keys(d).forEach(k=>localStorage[k]=JSON.stringify(d[k]));location.reload()};
+  r.readAsText(e.target.files[0]);
+}
+function resetAll(){
+  if(prompt("Senha de reset:")!==RESET_PASSWORD) return alert("Senha incorreta");
+  localStorage.clear(); location.reload();
+}
+
+/* VENDAS */
+function addSaleItem(){
+  if(!saleItemName.value) return;
+  const items=JSON.parse(localStorage.salesItems);
+  items.push({name:saleItemName.value,npc:+saleNpcPrice.value,stalker:+saleStalkerPrice.value});
+  localStorage.salesItems=JSON.stringify(items);
+  saleItemName.value=saleNpcPrice.value=saleStalkerPrice.value="";
+  renderSaleItems();
+}
+function removeSaleItem(i){
+  const items=JSON.parse(localStorage.salesItems);
+  items.splice(i,1);
+  localStorage.salesItems=JSON.stringify(items);
+  renderSaleItems();
+}
+function renderSaleItems(){
+  salesItemList.innerHTML="";
+  JSON.parse(localStorage.salesItems).forEach((i,idx)=>{
+    salesItemList.innerHTML+=`<li>${i.name} | NPC ₽${i.npc} | Stalker ₽${i.stalker}
+    <button class="remove" onclick="removeSaleItem(${idx})">X</button></li>`;
+  });
+}
+
+/* VENDAS STALKER */
+function addSaleLine(){
+  const items=JSON.parse(localStorage.salesItems);
+  if(!items.length) return alert("Nenhum item cadastrado");
+  const line=document.createElement("div"); line.className="sale-line";
+  const sel=document.createElement("select");
+  const empty=document.createElement("option");
+  empty.text="-- selecione --"; empty.value=""; sel.add(empty);
+  items.forEach(i=>{const o=document.createElement("option");o.text=o.value=i.name;sel.add(o)});
+  const qtd=document.createElement("input"); qtd.type="number";
+  const price=document.createElement("input"); price.disabled=true;
+  const sub=document.createElement("input"); sub.disabled=true;
+  const del=document.createElement("button"); del.className="remove"; del.textContent="X"; del.onclick=()=>line.remove();
+  sel.onchange=()=>{
+    const it=items.find(i=>i.name===sel.value);
+    if(!it){price.value=""; sub.value=""; return;}
+    price.value=it.stalker;
+    sub.value=qtd.value*price.value;
+  };
+  qtd.oninput=()=>{if(price.value) sub.value=qtd.value*price.value};
+  line.append(sel,qtd,price,sub,del); saleLines.append(line);
+}
+function closeSale(){
+  let total=0;
+  document.querySelectorAll('#saleLines .sale-line')
+    .forEach(l=>{total+=+l.children[3].value||0});
+  saleTotal.style.display="block";
+  saleTotal.innerHTML=`<strong>Total a repassar ao Stalker:</strong> ₽ ${total}`;
+}
+
+/* INIT */
+renderWarehouse();
+renderMembers();
+updateMemberSelect();
+renderBank();
+renderSaleItems();
+</script>
+
+</body>
+</html>
